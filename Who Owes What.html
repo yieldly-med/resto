@@ -1,0 +1,286 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Who Owes What</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  /* Layout: one narrow receipt-style column, grouped menu rows with steppers, fixed total bar at the bottom. */
+  :root {
+    --bg: #e9edeb;
+    --paper: #f7f8f6;
+    --ink: #17201c;
+    --muted: #5d6a64;
+    --rule: #cdd5d0;
+    --accent: #1c4fe0;
+    --accent-ink: #ffffff;
+    --tint: #e3eaff;
+    --font-body: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-num: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1412; --paper: #171e1b; --ink: #e9efec; --muted: #93a29a;
+      --rule: #2b3631; --accent: #8fa8ff; --accent-ink: #0d1330; --tint: #1e2747;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1412; --paper: #171e1b; --ink: #e9efec; --muted: #93a29a;
+    --rule: #2b3631; --accent: #8fa8ff; --accent-ink: #0d1330; --tint: #1e2747;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.4;
+    padding-inline: 16px;
+    padding-block: 20px 200px;
+  }
+  .sheet {
+    max-width: 520px;
+    margin-inline: auto;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 22px 18px 8px;
+  }
+  header { display: flex; flex-direction: column; gap: 6px; padding-bottom: 16px; border-bottom: 2px dashed var(--rule); }
+  h1 { margin: 0; font-size: 1.7rem; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
+  .lede { margin: 0; color: var(--muted); font-size: 0.95rem; max-width: 46ch; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .tag { font-family: var(--font-num); font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule); border-radius: 3px; padding: 3px 7px; }
+
+  section { padding-block: 16px 6px; }
+  h2 { margin: 0 0 4px; font-family: var(--font-num); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  ul { list-style: none; margin: 0; padding: 0; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 8px; margin-inline: -8px; border-radius: 6px; border-bottom: 1px solid var(--rule); }
+  .row:last-child { border-bottom-color: transparent; }
+  .row.on { background: var(--tint); border-bottom-color: transparent; }
+  .info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .name { font-weight: 500; overflow-wrap: anywhere; }
+  .prices { font-family: var(--font-num); font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .prices s { margin-right: 6px; }
+  .prices b { color: var(--ink); font-weight: 700; }
+  .note { font-size: 0.78rem; color: var(--muted); }
+
+  .stepper { display: flex; align-items: center; flex: none; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); }
+  .row.on .stepper { border-color: var(--accent); }
+  .stepper button {
+    width: 44px; height: 44px; border: 0; background: transparent; color: var(--ink);
+    font-family: var(--font-num); font-size: 1.3rem; line-height: 1; cursor: pointer; border-radius: 999px;
+    touch-action: manipulation;
+  }
+  .stepper button:disabled { color: var(--rule); cursor: default; }
+  .stepper button:not(:disabled):active { background: var(--tint); }
+  .stepper output { min-width: 1.6ch; text-align: center; font-family: var(--font-num); font-weight: 700; font-variant-numeric: tabular-nums; }
+  button:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .foot { margin: 14px 0 0; padding: 14px 0 12px; border-top: 2px dashed var(--rule); color: var(--muted); font-size: 0.82rem; }
+
+  .bar {
+    position: fixed; inset-inline: 0; bottom: 0;
+    background: var(--paper); border-top: 1px solid var(--rule);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .bar-in { max-width: 520px; margin-inline: auto; display: flex; flex-direction: column; gap: 10px; }
+  .totalrow { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  .lbl { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .lbl strong { font-family: var(--font-num); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .lbl span { font-family: var(--font-num); font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .total { font-family: var(--font-num); font-size: 2.1rem; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+  .actions { display: flex; gap: 8px; }
+  .btn { flex: 1; min-height: 44px; border-radius: 6px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); font: 600 0.92rem var(--font-body); cursor: pointer; touch-action: manipulation; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .fallback { width: 100%; min-height: 96px; font: 0.82rem var(--font-num); background: var(--bg); color: var(--ink); border: 1px solid var(--rule); border-radius: 6px; padding: 8px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .row { transition: background-color 0.12s; }
+  }
+</style>
+
+<main class="sheet">
+  <header>
+    <h1>Who owes what</h1>
+    <p class="lede">Tap + next to everything you ordered. The total at the bottom is what you owe.</p>
+    <div class="tags"><span class="tag">Tastecard discount applied</span><span class="tag">£1.50 service each</span></div>
+  </header>
+  <div id="menu"></div>
+  <p class="foot">Prices are after the Tastecard discount. Your share of the service charge is added once, as soon as you pick something.</p>
+</main>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="totalrow">
+      <div class="lbl"><strong>You owe</strong><span id="breakdown">Nothing picked yet</span></div>
+      <div class="total" id="total">£0.00</div>
+    </div>
+    <textarea id="fallback" class="fallback" readonly hidden aria-label="Order summary"></textarea>
+    <div class="actions">
+      <button class="btn" id="clear" type="button" disabled>Clear</button>
+      <button class="btn primary" id="copy" type="button" disabled>Copy my total</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var SERVICE = 150;
+  var GROUPS = [
+    { title: "Starters", items: [
+      { id: "wings", name: "Smok'd Wings", menu: 900, price: 547 },
+      { id: "poppers", name: "Jalapeno Poppers", menu: 750, price: 456 },
+      { id: "babycorn", name: "Cajun Babycorn Ribs", menu: 850, price: 517 }
+    ]},
+    { title: "Mains", items: [
+      { id: "bondi", name: "Bondi Burger", menu: 1700, price: 1033 },
+      { id: "wellington", name: "Mushroom Wellington Sm'oast", menu: 2100, price: 1276 },
+      { id: "brisketlamb", name: "Brisket & Lamb Combo", menu: 2300, price: 1398 },
+      { id: "lambchicken", name: "Lamb & Chicken Thighs Combo", menu: 2200, price: 1337 },
+      { id: "veganrib", name: "Vegan Beef Rib Sm'oast", menu: 3000, price: 1595, note: "Shared dish, cost split equally between the two portions" }
+    ]},
+    { title: "Sides", items: [
+      { id: "handful", name: "Handful of Fries", menu: 250, price: 152 },
+      { id: "skinny", name: "Skinny Fries", menu: 450, price: 273 },
+      { id: "mac", name: "Mac n Cheese", menu: 750, price: 456 }
+    ]},
+    { title: "Drinks", items: [
+      { id: "coke", name: "Coke (Pint)", menu: 410, price: 249 },
+      { id: "diet", name: "Diet Coke (Bottle)", menu: 340, price: 207 }
+    ]}
+  ];
+
+  var all = [];
+  GROUPS.forEach(function (g) { g.items.forEach(function (i) { all.push(i); }); });
+  var qty = {};
+  all.forEach(function (i) { qty[i.id] = 0; });
+
+  function gbp(p) { return "£" + (p / 100).toFixed(2); }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  var menu = document.getElementById("menu");
+  var rows = {};
+  var outs = {};
+  var minus = {};
+
+  GROUPS.forEach(function (g) {
+    var sec = el("section");
+    sec.appendChild(el("h2", null, g.title));
+    var ul = el("ul");
+    g.items.forEach(function (it) {
+      var li = el("li", "row");
+      var info = el("div", "info");
+      info.appendChild(el("span", "name", it.name));
+      var pr = el("span", "prices");
+      pr.appendChild(el("s", null, gbp(it.menu)));
+      pr.appendChild(el("b", null, gbp(it.price)));
+      info.appendChild(pr);
+      if (it.note) info.appendChild(el("span", "note", it.note));
+
+      var st = el("div", "stepper");
+      var m = el("button", null, "−");
+      m.type = "button";
+      m.disabled = true;
+      m.setAttribute("aria-label", "Remove one " + it.name);
+      m.addEventListener("click", function () { change(it.id, -1); });
+      var o = el("output", null, "0");
+      o.setAttribute("aria-live", "polite");
+      var p = el("button", null, "+");
+      p.type = "button";
+      p.setAttribute("aria-label", "Add one " + it.name);
+      p.addEventListener("click", function () { change(it.id, 1); });
+      st.appendChild(m); st.appendChild(o); st.appendChild(p);
+
+      li.appendChild(info); li.appendChild(st);
+      ul.appendChild(li);
+      rows[it.id] = li; outs[it.id] = o; minus[it.id] = m;
+    });
+    sec.appendChild(ul);
+    menu.appendChild(sec);
+  });
+
+  var totalEl = document.getElementById("total");
+  var breakdown = document.getElementById("breakdown");
+  var clearBtn = document.getElementById("clear");
+  var copyBtn = document.getElementById("copy");
+  var fallback = document.getElementById("fallback");
+
+  function change(id, d) {
+    qty[id] = Math.max(0, Math.min(20, qty[id] + d));
+    update();
+  }
+
+  function figures() {
+    var sub = 0, count = 0;
+    all.forEach(function (i) { sub += qty[i.id] * i.price; count += qty[i.id]; });
+    var svc = count > 0 ? SERVICE : 0;
+    return { sub: sub, svc: svc, total: sub + svc, count: count };
+  }
+
+  function update() {
+    all.forEach(function (i) {
+      var q = qty[i.id];
+      outs[i.id].textContent = String(q);
+      minus[i.id].disabled = q === 0;
+      rows[i.id].classList.toggle("on", q > 0);
+    });
+    var f = figures();
+    totalEl.textContent = gbp(f.total);
+    breakdown.textContent = f.count === 0
+      ? "Nothing picked yet"
+      : gbp(f.sub) + " food & drink + " + gbp(f.svc) + " service";
+    clearBtn.disabled = f.count === 0;
+    copyBtn.disabled = f.count === 0;
+    fallback.hidden = true;
+  }
+
+  function summary() {
+    var lines = [];
+    all.forEach(function (i) {
+      if (qty[i.id] > 0) lines.push(qty[i.id] + " × " + i.name + "  " + gbp(qty[i.id] * i.price));
+    });
+    var f = figures();
+    lines.push("Service charge  " + gbp(f.svc));
+    lines.push("Total owed  " + gbp(f.total));
+    return lines.join("\n");
+  }
+
+  clearBtn.addEventListener("click", function () {
+    all.forEach(function (i) { qty[i.id] = 0; });
+    update();
+  });
+
+  var copyTimer;
+  copyBtn.addEventListener("click", function () {
+    var text = summary();
+    function done() {
+      copyBtn.textContent = "Copied";
+      clearTimeout(copyTimer);
+      copyTimer = setTimeout(function () { copyBtn.textContent = "Copy my total"; }, 1600);
+    }
+    function manual() {
+      fallback.value = text;
+      fallback.hidden = false;
+      fallback.focus();
+      fallback.select();
+    }
+    try {
+      navigator.clipboard.writeText(text).then(done, manual);
+    } catch (e) {
+      manual();
+    }
+  });
+
+  update();
+})();
+</script>
+
+</body></html>
